@@ -45,6 +45,17 @@
             word-break: break-word !important;
             hyphens: auto;
         }
+
+        /* Hide result divs if unnecessary */
+        #resultMobile, #result {
+            display: none;
+        }
+
+        /* Show result divs based on the mobile view */
+        .show-result #result,
+        .show-result #resultMobile {
+            display: block;
+        }
     </style>
 </head>
 
@@ -65,17 +76,17 @@
             class="lg:w-auto w-auto flex flex-col items-start justify-start p-8 bg-white shadow-inner fade-in space-y-6">
             <h1 class="text-3xl font-bold text-indigo-700">Enter Share Code</h1>
             <div id="codeInputs" class="flex justify-start gap-3 w-full max-w-sm">
-                <input type="text" maxlength="1"
+                <input type="tel" maxlength="1"
                     class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
-                <input type="text" maxlength="1"
+                <input type="tel" maxlength="1"
                     class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
-                <input type="text" maxlength="1"
+                <input type="tel" maxlength="1"
                     class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
-                <input type="text" maxlength="1"
+                <input type="tel" maxlength="1"
                     class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
-                <input type="text" maxlength="1"
+                <input type="tel" maxlength="1"
                     class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
-                <input type="text" maxlength="1"
+                <input type="tel" maxlength="1"
                     class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
             </div>
 
@@ -107,6 +118,7 @@
         const resultMobile = document.getElementById('resultMobile');
         const clearBtn = document.getElementById('clearBtn');
         const clearBtnWrapper = document.getElementById('clearBtnWrapper');
+        const body = document.body;
 
         // Helper: Clear all inputs and result
         function clearInputs() {
@@ -192,13 +204,13 @@
             if (data.status === 'expired') {
                 resultDiv.innerHTML = '<p class="text-red-600 font-semibold">‼️ This code has expired.</p>';
                 resultMobile.innerHTML = '<p class="text-red-600 font-semibold">‼️ This code has expired.</p>';
-            } else if (data.ID) {
-                const content = `<pre class="bg-white p-4 rounded border border-gray-300 shadow-inner w-full">${data.Data}</pre>`;
-                resultDiv.innerHTML = content;
-                resultMobile.innerHTML = content;
+            } else if (data.status === 'not found') {
+                resultDiv.innerHTML = '<p class="text-gray-500">Code not found. Please try again.</p>';
+                resultMobile.innerHTML = '<p class="text-gray-500">Code not found. Please try again.</p>';
             } else {
-                resultDiv.innerHTML = '<p class="text-red-600">❌ Invalid code or no data found.</p>';
-                resultMobile.innerHTML = '<p class="text-red-600">❌ Invalid code or no data found.</p>';
+                resultDiv.innerHTML = `<pre class="bg-white p-4 rounded border border-gray-300 shadow-inner w-full">${data.Data}</pre>`;
+                resultMobile.innerHTML = `<pre class="bg-white p-4 rounded border border-gray-300 shadow-inner w-full">${data.Data}</pre>`;
+                body.classList.add('show-result');
             }
         }
 
