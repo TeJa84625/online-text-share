@@ -215,9 +215,9 @@
                     displayData(data, code);
                 } catch (err) {
                     resultDiv.innerHTML = '<p class="text-red-600">Error fetching data. Try again.</p>';
-                    if (resultMobile) {
-                        resultMobile.innerHTML = '<p class="text-red-600">Error fetching data. Try again.</p>';
-                    }
+                    // if (resultMobile) {
+                    //     resultMobile.innerHTML = '<p class="text-red-600">Error fetching data. Try again.</p>';
+                    // }
                     console.error('Fetch error:', err);
                 }
             }
@@ -228,15 +228,15 @@
 
                 if (data.status === 'expired') {
                     resultDiv.innerHTML = '<p class="text-red-600 font-semibold">‼️ This code has expired.</p>';
-                    if (resultMobile) {
-                        resultMobile.innerHTML = '<p class="text-red-600 font-semibold">‼️ This code has expired.</p>';
-                    }
+                    // if (resultMobile) {
+                    //     resultMobile.innerHTML = '<p class="text-red-600 font-semibold">‼️ This code has expired.</p>';
+                    // }
                 } else if (data.ID) {
                     const content = `<pre class="bg-white p-4 rounded border border-gray-300 shadow-inner w-full">${data.Data}</pre>`;
                     resultDiv.innerHTML = content;
-                    if (resultMobile) {
-                        resultMobile.innerHTML = `<div class="result-text">${content}</div>`;
-                    }
+                    // if (resultMobile) {
+                    //     resultMobile.innerHTML = `<div class="result-text">${content}</div>`;
+                    // }
 
                     actionButtons.classList.remove('hidden');
 
@@ -246,9 +246,9 @@
 
                 } else {
                     resultDiv.innerHTML = '<p class="text-red-600">❌ Invalid code or no data found.</p>';
-                    if (resultMobile) {
-                        resultMobile.innerHTML = '<p class="text-red-600">❌ Invalid code or no data found.</p>';
-                    }
+                    // if (resultMobile) {
+                    //     resultMobile.innerHTML = '<p class="text-red-600">❌ Invalid code or no data found.</p>';
+                    // }
                 }
             }
 
@@ -303,3 +303,4 @@
 </body>
 
 </html>
+
