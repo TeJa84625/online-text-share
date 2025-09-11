@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Code Lookup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Smooth fade-in */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Remove spinner for number inputs */
+        input.code-box::-webkit-outer-spin-button,
+        input.code-box::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input.code-box {
+            appearance: textfield;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        /* Force word wrap on output */
+        #result pre {
+            white-space: pre-wrap !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            word-break: break-word !important;
+            hyphens: auto;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen font-sans">
+    <!-- NAVBAR -->
+    <nav class="bg-white shadow-md px-6 py-4 flex justify-between items-center sticky top-0 z-10 select-none">
+        <div class="text-xl font-bold text-indigo-700">TextShare</div>
+        <div class="space-x-6 text-gray-700 font-medium">
+            <a href="index.html" class="hover:text-indigo-600 transition">Generate Code</a>
+            <a href="about.html" class="hover:text-indigo-600 transition">About</a>
+        </div>
+    </nav>
+
+    <!-- Split Layout -->
+    <main class="flex flex-col lg:flex-row min-h-[calc(100vh-80px)]">
+        <!-- Left: Code Input -->
+        <section
+            class="lg:w-auto w-auto flex flex-col items-start justify-start p-8 bg-white shadow-inner fade-in space-y-6">
+            <h1 class="text-3xl font-bold text-indigo-700">Enter Share Code</h1>
+            <div id="codeInputs" class="flex justify-start gap-3 w-full max-w-sm">
+                <input type="text" maxlength="1"
+                    class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
+                <input type="text" maxlength="1"
+                    class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
+                <input type="text" maxlength="1"
+                    class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
+                <input type="text" maxlength="1"
+                    class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
+                <input type="text" maxlength="1"
+                    class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
+                <input type="text" maxlength="1"
+                    class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
+            </div>
+
+            <!-- Clear button visible if at least 1 digit entered -->
+            <div id="clearBtnWrapper" class="hidden w-full max-w-sm flex justify-center items-center">
+                <button id="clearBtn"
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded transition shadow"> Clear
+                </button>
+            </div>
+
+            <!-- Mobile result below inputs -->
+            <div id="resultMobile" class="text-center text-gray-700 text-lg lg:hidden"></div>
+        </section>
+
+        <!-- Right: Result Display -->
+        <section class="lg:w-full w-full p-8 bg-gray-50 fade-in flex items-start justify-center">
+            <div class="w-full max-w-3xl">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Shared Text</h2>
+                <div id="result" class="text-gray-700 text-lg whitespace-pre-wrap break-words w-full min-h-[300px]">
+                    <p class="text-gray-400">Enter a 6-digit code to view the shared content here.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const inputs = document.querySelectorAll('.code-box');
+        const resultDiv = document.getElementById('result');
+        const resultMobile = document.getElementById('resultMobile');
+        const clearBtn = document.getElementById('clearBtn');
+        const clearBtnWrapper = document.getElementById('clearBtnWrapper');
+
+        // Helper: Clear all inputs and result
+        function clearInputs() {
+            inputs.forEach(input => input.value = '');
+            inputs[0].focus();
+            clearBtnWrapper.classList.add('hidden');
+        }
+
+        clearBtn.addEventListener('click', () => {
+            clearInputs();
+        });
+
+        // Focus next input automatically, allow only digits
+        inputs.forEach((input, idx) => {
+            input.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (/^\d$/.test(val)) {
+                    if (idx < inputs.length - 1) inputs[idx + 1].focus();
+                } else {
+                    e.target.value = '';
+                }
+
+                // Show clear button if at least one digit is present
+                const digitsEntered = [...inputs].filter(i => i.value !== '').length;
+                if (digitsEntered > 0) {
+                    clearBtnWrapper.classList.remove('hidden');
+                } else {
+                    clearBtnWrapper.classList.add('hidden');
+                }
+
+                // If full 6 digits, fetch data & blur inputs
+                const code = [...inputs].map(i => i.value).join('');
+                if (code.length === 6) {
+                    fetchCodeData(code);
+                    document.activeElement.blur();
+                }
+            });
+
+            // Backspace moves to previous input if empty
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !input.value && idx > 0) {
+                    inputs[idx - 1].focus();
+                }
+            });
+
+            // Handle paste of full code
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const paste = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+                if (paste.length) {
+                    paste.split('').forEach((char, i) => {
+                        if (inputs[i]) inputs[i].value = char;
+                    });
+                    if (paste.length > 0) {
+                        clearBtnWrapper.classList.remove('hidden');
+                    }
+                    if (paste.length === 6) {
+                        fetchCodeData(paste);
+                        document.activeElement.blur();
+                    }
+                }
+            });
+        });
+
+        // Fetch data based on the code entered
+        async function fetchCodeData(code) {
+            resultDiv.innerHTML = '<p class="text-gray-500">Checking...</p>';
+            resultMobile.innerHTML = '<p class="text-gray-500">Checking...</p>';
+            const url = `https://script.google.com/macros/s/AKfycbxWaZqfnF7jMg56OKUcVRBtbfzLAl1BLkN1Bz8x0aABssrQUHWj7oxulTU3Y5lWMhex/exec?ID=${code}`;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                displayData(data);
+            } catch (err) {
+                resultDiv.innerHTML = '<p class="text-red-600">Error fetching data. Try again.</p>';
+                resultMobile.innerHTML = '<p class="text-red-600">Error fetching data. Try again.</p>';
+                console.error('Fetch error:', err);
+            }
+        }
+
+        // Display fetched data in the result area
+        function displayData(data) {
+            if (data.status === 'expired') {
+                resultDiv.innerHTML = '<p class="text-red-600 font-semibold">‼️ This code has expired.</p>';
+                resultMobile.innerHTML = '<p class="text-red-600 font-semibold">‼️ This code has expired.</p>';
+            } else if (data.ID) {
+                const content = `<pre class="bg-white p-4 rounded border border-gray-300 shadow-inner w-full">${data.Data}</pre>`;
+                resultDiv.innerHTML = content;
+                resultMobile.innerHTML = content;
+            } else {
+                resultDiv.innerHTML = '<p class="text-red-600">❌ Invalid code or no data found.</p>';
+                resultMobile.innerHTML = '<p class="text-red-600">❌ Invalid code or no data found.</p>';
+            }
+        }
+
+        // Autofocus first input on load and check for query parameter
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const codeFromUrl = urlParams.get('code');
+
+            if (codeFromUrl && codeFromUrl.length === 6 && /^\d+$/.test(codeFromUrl)) {
+                codeFromUrl.split('').forEach((digit, i) => {
+                    inputs[i].value = digit;
+                });
+
+                // Fetch the data for this code
+                fetchCodeData(codeFromUrl);
+            } else {
+                inputs[0].focus(); // If no valid code, focus first input
+            }
+        });
+    </script>
+</body>
+
+</html>

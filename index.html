@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Online Share Text</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script> <!-- QR Code library -->
+    <style>
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Auto resize the textarea */
+        textarea {
+            overflow: hidden;
+            min-height: 100px;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen font-sans">
+
+    <!-- 🌐 NAVBAR -->
+    <nav class="bg-white shadow-md px-6 py-4 flex justify-between items-center sticky top-0 z-10">
+        <div class="text-xl font-bold text-indigo-700">TextShare</div>
+        <div class="space-x-6 text-gray-700 font-medium">
+            <a href="code.html" class="hover:text-indigo-600 transition">I have a code</a>
+            <a href="about.html" class="hover:text-indigo-600 transition">About</a>
+        </div>
+    </nav>
+
+    <!-- 📝 MAIN CONTENT -->
+    <main class="max-w-3xl mx-auto mt-10 bg-white p-8 rounded-xl shadow-md fade-in">
+        <h2 class="text-3xl font-bold mb-6 text-indigo-700 text-center">Online Share Text</h2>
+
+        <!-- ✅ Textarea -->
+        <textarea id="textInput" placeholder="Type or paste your text here..."
+            class="w-full p-4 border border-gray-300 rounded-lg resize-y min-h-[200px] focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+            oninput="autoResize(this)"></textarea>
+
+        <!-- 🛠️ Options -->
+        <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <!-- ⏳ Expiry -->
+            <label class="inline-flex items-center text-gray-700">
+                <input type="checkbox" id="expiryCheck" class="mr-2 accent-indigo-600">
+                Set Expiry
+            </label>
+
+            <!-- 🧹 Clear Text Button -->
+            <button id="clearBtn"
+                class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded transition shadow">
+                Clear Text
+            </button>
+        </div>
+
+        <!-- 📅 Expiry Fields -->
+        <div id="expiryFields" class="mt-4 hidden fade-in">
+            <div class="grid sm:grid-cols-2 gap-4">
+                <input type="date" id="expiryDate"
+                    class="border p-2 rounded w-full focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                <input type="time" id="expiryTime"
+                    class="border p-2 rounded w-full focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+            </div>
+        </div>
+
+        <!-- 🚀 Generate Button -->
+        <div id="generateContainer" class="mt-6 text-center">
+            <button id="generateBtn"
+                class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition font-semibold shadow-lg">
+                Generate Share Code
+            </button>
+        </div>
+
+        <!-- ⏳ Loading + Result -->
+        <div id="loadingBox" class="mt-6 text-center text-indigo-600 font-medium hidden fade-in">
+        </div>
+
+        <!-- Code result will go here -->
+        <div id="resultBox"
+            class="mt-6 text-center text-lg font-semibold text-green-600 hidden fade-in flex items-center justify-center gap-3">
+        </div>
+
+        <!-- QR Code generation section -->
+        <div id="qrCodeSection" class="mt-6 hidden text-center flex justify-center items-center flex-col">
+            <button id="generateQrBtn"
+                class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition font-semibold shadow-lg">
+                Generate QR Code
+            </button>
+            <div id="qrCodeContainer" class="mt-4 flex justify-center items-center"></div> <!-- Centering added here -->
+            <a id="downloadQrBtn"
+                class="hidden bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition font-semibold shadow-lg mt-4 inline-block"
+                download="qrcode.png">
+                Download QR Code
+            </a>
+        </div>
+
+    </main>
+
+    <script>
+        const textInput = document.getElementById('textInput');
+        const expiryCheck = document.getElementById('expiryCheck');
+        const expiryFields = document.getElementById('expiryFields');
+        const expiryDate = document.getElementById('expiryDate');
+        const expiryTime = document.getElementById('expiryTime');
+        const generateBtn = document.getElementById('generateBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const resultBox = document.getElementById('resultBox');
+        const loadingBox = document.getElementById('loadingBox');
+        const generateContainer = document.getElementById('generateContainer');
+        const generateQrBtn = document.getElementById('generateQrBtn');
+        const qrCodeSection = document.getElementById('qrCodeSection');
+        const qrCodeContainer = document.getElementById('qrCodeContainer');
+        const downloadQrBtn = document.getElementById('downloadQrBtn');
+
+        // 👁️ Toggle expiry fields
+        expiryCheck.addEventListener('change', () => {
+            if (expiryCheck.checked) {
+                expiryFields.classList.remove('hidden');
+            } else {
+                expiryFields.classList.add('hidden');
+            }
+        });
+
+        // 🧹 Clear text
+        clearBtn.addEventListener('click', () => {
+            textInput.value = '';
+            resultBox.classList.add('hidden'); // Hide the result
+        });
+
+        // 🔐 Generate 6-digit code
+        function generateId() {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        }
+
+        async function checkId(id) {
+            const url = 'https://script.google.com/macros/s/AKfycbxWaZqfnF7jMg56OKUcVRBtbfzLAl1BLkN1Bz8x0aABssrQUHWj7oxulTU3Y5lWMhex/exec?ID=' + encodeURIComponent(id);
+            try {
+                const resp = await fetch(url);
+                if (!resp.ok) return false;
+                const data = await resp.json();
+                return data.status === 'not_found';
+            } catch (e) {
+                console.error('Error checking ID:', e);
+                return false;
+            }
+        }
+
+        // Helper to create code input boxes UI
+        function createCodeInputs(code) {
+            const container = document.createElement('div');
+            container.id = 'codeInputs';
+            container.className = 'flex justify-center gap-3 w-full max-w-sm';
+
+            for (const char of code) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.maxLength = 1;
+                input.value = char;
+                input.readOnly = true;
+                input.className = 'code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition text-center text-xl font-mono';
+                container.appendChild(input);
+            }
+            return container;
+        }
+
+        // Copy icon button
+        function createCopyButton(code) {
+            const btn = document.createElement('button');
+            btn.className = 'ml-2 p-2 rounded bg-indigo-600 hover:bg-indigo-700 transition';
+            btn.title = 'Copy code';
+            btn.setAttribute('aria-label', 'Copy code');
+            btn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6 text-white">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 16h8M8 12h8m-6-8h6a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2" />
+                </svg>`;
+            btn.addEventListener('click', () => {
+                navigator.clipboard.writeText(code).then(() => {
+                    alert('Code copied to clipboard!');
+                }).catch(() => {
+                    alert('Failed to copy code.');
+                });
+            });
+            return btn;
+        }
+
+        // Auto-resize textarea when input changes
+        function autoResize(textarea) {
+            textarea.style.height = 'auto'; // Reset height to auto
+            textarea.style.height = textarea.scrollHeight + 'px'; // Set to scroll height
+        }
+
+        generateBtn.addEventListener('click', async () => {
+            const text = textInput.value.trim();
+            resultBox.innerHTML = '';
+            resultBox.classList.add('hidden');
+            if (!text) {
+                alert('Please enter some text to share.');
+                return;
+            }
+
+            // Disable the generate button and change its label to "Generating..."
+            generateBtn.disabled = true;
+            generateBtn.textContent = "Generating...";
+
+            // Expiry logic
+            let expiryVal = '-';
+            if (expiryCheck.checked) {
+                if (!expiryDate.value || !expiryTime.value) {
+                    alert('Please provide expiry date and time.');
+                    return;
+                }
+                const d = new Date(`${expiryDate.value}T${expiryTime.value}`);
+                const dd = String(d.getDate()).padStart(2, '0');
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const yyyy = d.getFullYear();
+                const hh = String(d.getHours()).padStart(2, '0');
+                const min = String(d.getMinutes()).padStart(2, '0');
+                expiryVal = `${dd}-${mm}-${yyyy}-${hh}-${min}`;
+            }
+
+            // Show loading
+            loadingBox.classList.remove('hidden');
+
+            // Generate unique code
+            let code = '';
+            for (let i = 0; i < 5; i++) {
+                const candidate = generateId();
+                if (await checkId(candidate)) {
+                    code = candidate;
+                    break;
+                }
+            }
+
+            if (!code) {
+                loadingBox.classList.add('hidden');
+                alert('Unable to generate a unique code. Please try again.');
+                generateBtn.disabled = false;
+                generateBtn.textContent = "Generate Share Code";
+                return;
+            }
+
+            // Submit to Google Form
+            const formUrl = '';//https://docs.google.com/forms/d/e/1FAIpQLSdHUZHIdCRqnpjFN3s0GPdNsU2YT_3xXvG-ERL2oYOnnEA_YA/formResponse
+            const formData = new FormData();
+            formData.append('entry.69522754', code);
+            formData.append('entry.659475936', 'Text');
+            formData.append('entry.1160567664', text);
+            formData.append('entry.2035113390', expiryVal);
+
+            try {
+                await fetch(formUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: formData
+                });
+
+                // Hide the generate button and show the generated code
+                generateContainer.innerHTML = ''; // Remove the generate button
+                loadingBox.classList.add('hidden');
+
+                // Show code inputs and copy button
+                resultBox.classList.remove('hidden');
+                const codeInputs = createCodeInputs(code);
+                const copyBtn = createCopyButton(code);
+
+                resultBox.appendChild(codeInputs);
+                resultBox.appendChild(copyBtn);
+
+                // Show QR code generation section
+                qrCodeSection.classList.remove('hidden');
+                generateQrBtn.addEventListener('click', () => generateQrCode(code));
+
+            } catch (err) {
+                loadingBox.classList.add('hidden');
+                alert('Something went wrong. Please try again.');
+                generateBtn.disabled = false;
+                generateBtn.textContent = "Generate Share Code";
+            }
+        });
+
+        function generateQrCode(code) {
+            // Disable the QR code button and show "Generating..."
+            generateQrBtn.disabled = true;
+            generateQrBtn.textContent = "Generating...";
+
+            const url = `code.html?code=${code}`;
+            const qrCode = new QRCode(qrCodeContainer, {
+                text: url,
+                width: 128,
+                height: 128,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.L
+            });
+
+            // After the QR code is generated, show the download button
+            generateQrBtn.remove();
+            downloadQrBtn.classList.remove('hidden');
+
+            // Allow downloading of the QR code
+            downloadQrBtn.addEventListener('click', () => {
+                const canvas = qrCodeContainer.querySelector('canvas');
+                const qrImage = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = qrImage;
+                link.download = 'qrcode.png';
+                link.click();
+            });
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>About Me</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Smooth fade-in */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Force word wrap on output */
+        #result pre {
+            white-space: pre-wrap !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            word-break: break-word !important;
+            hyphens: auto;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen font-sans">
+    <!-- NAVBAR -->
+    <nav class="bg-white shadow-md px-6 py-4 flex justify-between items-center sticky top-0 z-10 select-none">
+        <div class="text-xl font-bold text-indigo-700">TextShare</div>
+        <div class="space-x-6 text-gray-700 font-medium">
+            <a href="index.html" class="hover:text-indigo-600 transition">Generate Code</a>
+            <a href="code.html" class="hover:text-indigo-600 transition">I have a code</a>
+            <a href="about.html" class="hover:text-indigo-600 transition">About</a>
+        </div>
+    </nav>
+
+    <!-- Split Layout -->
+    <main class="flex flex-col lg:flex-row min-h-[calc(100vh-80px)]">
+        <!-- Left: About Me Section -->
+        <section
+            class="lg:w-auto w-auto flex flex-col items-start justify-start p-8 bg-white shadow-inner fade-in space-y-6">
+            <h1 class="text-3xl font-bold text-indigo-700">About Me</h1>
+            <div class="text-gray-700 text-lg">
+                <p class="mb-4">Hello! I'm [Your Name], a passionate web developer based in [Your Location]. With a
+                    strong foundation in HTML, CSS, JavaScript, and other web technologies, I strive to create seamless
+                    and engaging digital experiences. I love exploring new tools and frameworks to enhance the quality
+                    of my work and improve my problem-solving skills.</p>
+
+                <p class="mb-4">When I'm not coding, you can find me experimenting with creative projects, contributing
+                    to open-source, or enjoying my hobbies like [mention a hobby, e.g., photography, gaming, hiking].
+                </p>
+
+                <p class="mb-4">I'm always open to collaborating on exciting new projects, whether it's building
+                    something from the ground up or enhancing existing platforms.</p>
+
+                <p class="mb-4 font-semibold">Check out my work and portfolio below:</p>
+                <a href="https://teja84625.github.io/Portfolio_/index.html"
+                    class="text-indigo-600 hover:text-indigo-800 font-semibold transition">Visit my portfolio</a>
+            </div>
+        </section>
+
+        <!-- Right: Contact Section (Optional) -->
+        <section class="lg:w-full w-full p-8 bg-gray-50 fade-in flex items-start justify-center">
+            <div class="w-full max-w-3xl">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Contact</h2>
+                <div class="text-gray-700 text-lg">
+                    <p>If you'd like to get in touch with me, feel free to reach out via the following platforms:</p>
+                    <ul class="list-disc ml-5">
+                        <li>Email: <a href="mailto:youremail@example.com"
+                                class="text-indigo-600 hover:text-indigo-800">youremail@example.com</a></li>
+                        <li>GitHub: <a href="https://github.com/yourusername"
+                                class="text-indigo-600 hover:text-indigo-800">github.com/yourusername</a></li>
+                        <li>LinkedIn: <a href="https://linkedin.com/in/yourusername"
+                                class="text-indigo-600 hover:text-indigo-800">linkedin.com/in/yourusername</a></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // This script section remains unchanged from your original, as it is not necessary for the About Me page.
+    </script>
+</body>
+
+</html>
