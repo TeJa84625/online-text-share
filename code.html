@@ -46,15 +46,9 @@
             hyphens: auto;
         }
 
-        /* Hide result divs if unnecessary */
-        #resultMobile, #result {
-            display: none;
-        }
-
-        /* Show result divs based on the mobile view */
-        .show-result #result,
-        .show-result #resultMobile {
-            display: block;
+        /* Add space between the mobile result items */
+        #resultMobile .result-text {
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -72,34 +66,34 @@
     <!-- Split Layout -->
     <main class="flex flex-col lg:flex-row min-h-[calc(100vh-80px)]">
         <!-- Left: Code Input -->
-        <section
-            class="lg:w-auto w-auto flex flex-col items-start justify-start p-8 bg-white shadow-inner fade-in space-y-6">
+        <section class="w-auto flex flex-col items-center justify-start p-6 bg-white shadow-inner fade-in space-y-6">
             <h1 class="text-3xl font-bold text-indigo-700">Enter Share Code</h1>
             <div id="codeInputs" class="flex justify-start gap-3 w-full max-w-sm">
-                <input type="tel" maxlength="1"
+                <input type="text" maxlength="1" inputmode="numeric"
                     class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
-                <input type="tel" maxlength="1"
+                <input type="text" maxlength="1" inputmode="numeric"
                     class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
-                <input type="tel" maxlength="1"
+                <input type="text" maxlength="1" inputmode="numeric"
                     class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
-                <input type="tel" maxlength="1"
+                <input type="text" maxlength="1" inputmode="numeric"
                     class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
-                <input type="tel" maxlength="1"
+                <input type="text" maxlength="1" inputmode="numeric"
                     class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
-                <input type="tel" maxlength="1"
+                <input type="text" maxlength="1" inputmode="numeric"
                     class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
             </div>
-
+        
             <!-- Clear button visible if at least 1 digit entered -->
             <div id="clearBtnWrapper" class="hidden w-full max-w-sm flex justify-center items-center">
-                <button id="clearBtn"
-                    class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded transition shadow"> Clear
+                <button id="clearBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded transition shadow">
+                    Clear
                 </button>
             </div>
-
+        
             <!-- Mobile result below inputs -->
             <div id="resultMobile" class="text-center text-gray-700 text-lg lg:hidden"></div>
         </section>
+
 
         <!-- Right: Result Display -->
         <section class="lg:w-full w-full p-8 bg-gray-50 fade-in flex items-start justify-center">
@@ -118,7 +112,6 @@
         const resultMobile = document.getElementById('resultMobile');
         const clearBtn = document.getElementById('clearBtn');
         const clearBtnWrapper = document.getElementById('clearBtnWrapper');
-        const body = document.body;
 
         // Helper: Clear all inputs and result
         function clearInputs() {
@@ -186,7 +179,7 @@
         // Fetch data based on the code entered
         async function fetchCodeData(code) {
             resultDiv.innerHTML = '<p class="text-gray-500">Checking...</p>';
-            resultMobile.innerHTML = '<p class="text-gray-500">Checking...</p>';
+            resultMobile.innerHTML = '<p class="text-gray-500"></p>';
             const url = `https://script.google.com/macros/s/AKfycbxWaZqfnF7jMg56OKUcVRBtbfzLAl1BLkN1Bz8x0aABssrQUHWj7oxulTU3Y5lWMhex/exec?ID=${code}`;
             try {
                 const res = await fetch(url);
@@ -200,19 +193,29 @@
         }
 
         // Display fetched data in the result area
-        function displayData(data) {
-            if (data.status === 'expired') {
-                resultDiv.innerHTML = '<p class="text-red-600 font-semibold">‼️ This code has expired.</p>';
-                resultMobile.innerHTML = '<p class="text-red-600 font-semibold">‼️ This code has expired.</p>';
-            } else if (data.status === 'not found') {
-                resultDiv.innerHTML = '<p class="text-gray-500">Code not found. Please try again.</p>';
-                resultMobile.innerHTML = '<p class="text-gray-500">Code not found. Please try again.</p>';
-            } else {
-                resultDiv.innerHTML = `<pre class="bg-white p-4 rounded border border-gray-300 shadow-inner w-full">${data.Data}</pre>`;
-                resultMobile.innerHTML = `<pre class="bg-white p-4 rounded border border-gray-300 shadow-inner w-full">${data.Data}</pre>`;
-                body.classList.add('show-result');
+            function displayData(data) {
+                if (data.status === 'expired') {
+                    resultDiv.innerHTML = '<p class="text-red-600 font-semibold">‼️ This code has expired.</p>';
+                    // Ensure only one message is shown in mobile
+                    if (!resultMobile.innerHTML) {
+                        resultMobile.innerHTML = '<p class="text-red-600 font-semibold">‼️ This code has expired.</p>';
+                    }
+                } else if (data.ID) {
+                    const content = `<pre class="bg-white p-4 rounded border border-gray-300 shadow-inner w-full">${data.Data}</pre>`;
+                    resultDiv.innerHTML = content;
+                    // Only add content to resultMobile if it hasn't been added yet
+                    if (!resultMobile.innerHTML) {
+                        resultMobile.innerHTML = `<div class="result-text">${content}</div>`;
+                    }
+                } else {
+                    resultDiv.innerHTML = '<p class="text-red-600">❌ Invalid code or no data found.</p>';
+                    // Ensure only one error message is shown in mobile
+                    if (!resultMobile.innerHTML) {
+                        resultMobile.innerHTML = '<p class="text-red-600">❌ Invalid code or no data found.</p>';
+                    }
+                }
             }
-        }
+
 
         // Autofocus first input on load and check for query parameter
         window.addEventListener('DOMContentLoaded', () => {
