@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <title>Code Lookup</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Smooth fade-in */
@@ -50,6 +51,13 @@
         #resultMobile .result-text {
             margin-bottom: 10px;
         }
+
+        /* Style for the action buttons */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 
@@ -68,7 +76,7 @@
         <!-- Left: Code Input -->
         <section class="w-auto flex flex-col items-center justify-start p-6 bg-white shadow-inner fade-in space-y-6">
             <h1 class="text-3xl font-bold text-indigo-700">Enter Share Code</h1>
-            <div id="codeInputs" class="flex justify-start gap-3 w-full max-w-sm">
+            <div id="codeInputs" class="flex justify-start gap-3 w-full max-w-sm justify-center">
                 <input type="text" maxlength="1" inputmode="numeric"
                     class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
                 <input type="text" maxlength="1" inputmode="numeric"
@@ -82,158 +90,216 @@
                 <input type="text" maxlength="1" inputmode="numeric"
                     class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
             </div>
-        
+
             <!-- Clear button visible if at least 1 digit entered -->
             <div id="clearBtnWrapper" class="hidden w-full max-w-sm flex justify-center items-center">
-                <button id="clearBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded transition shadow">
+                <button id="clearBtn"
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded transition shadow">
                     Clear
                 </button>
             </div>
-        
+
             <!-- Mobile result below inputs -->
             <div id="resultMobile" class="text-center text-gray-700 text-lg lg:hidden"></div>
         </section>
 
 
         <!-- Right: Result Display -->
-        <section class="lg:w-full w-full p-8 bg-gray-50 fade-in flex items-start justify-center">
-            <div class="w-full max-w-3xl">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Shared Text</h2>
-                <div id="result" class="text-gray-700 text-lg whitespace-pre-wrap break-words w-full min-h-[300px]">
-                    <p class="text-gray-400">Enter a 6-digit code to view the shared content here.</p>
+        <section class="lg:w-full w-full p-8 bg-gray-50 fade-in flex flex-col">
+            <!-- Header and Action Buttons in one line -->
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-800 border-b pb-2">Shared Text</h2>
+                <!-- Action buttons: Copy and Download placed on the right -->
+                <div id="actionButtons" class="action-buttons flex space-x-4 hidden">
+                    <button id="copyBtn" aria-label="Copy Text"
+                        class="bg-indigo-500 text-white px-4 py-2 rounded shadow hover:bg-indigo-600">
+                        <i class="fa-solid fa-copy"></i>
+                    </button>
+                    <button id="downloadBtn" aria-label="Download Text"
+                        class="bg-green-500 text-white px-4 py-2 rounded shadow hover:bg-green-600">
+                        <i class="fa-solid fa-download"></i>
+                    </button>
                 </div>
             </div>
+            <!-- Result Section Below with Full Width -->
+            <div id="result" class="text-gray-700 text-lg whitespace-pre-wrap break-words w-full h-full">
+                <p class="text-gray-400">Enter a 6-digit code to view the shared content here.</p>
+            </div>
         </section>
-    </main>
+        </main>
+        
+        <script>
+            const inputs = document.querySelectorAll('.code-box');
+            const resultDiv = document.getElementById('result');
+            const resultMobile = document.getElementById('resultMobile');
+            const clearBtn = document.getElementById('clearBtn');
+            const clearBtnWrapper = document.getElementById('clearBtnWrapper');
+            const actionButtons = document.getElementById('actionButtons');
+            const copyBtn = document.getElementById('copyBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
 
-    <script>
-        const inputs = document.querySelectorAll('.code-box');
-        const resultDiv = document.getElementById('result');
-        const resultMobile = document.getElementById('resultMobile');
-        const clearBtn = document.getElementById('clearBtn');
-        const clearBtnWrapper = document.getElementById('clearBtnWrapper');
+            // Helper: Clear all inputs and result
+            function clearInputs() {
+                inputs.forEach(input => input.value = '');
+                if (inputs[0]) inputs[0].focus();
+                clearBtnWrapper.classList.add('hidden');
+            }
 
-        // Helper: Clear all inputs and result
-        function clearInputs() {
-            inputs.forEach(input => input.value = '');
-            inputs[0].focus();
-            clearBtnWrapper.classList.add('hidden');
-        }
-
-        clearBtn.addEventListener('click', () => {
-            clearInputs();
-        });
-
-        // Focus next input automatically, allow only digits
-        inputs.forEach((input, idx) => {
-            input.addEventListener('input', (e) => {
-                const val = e.target.value;
-                if (/^\d$/.test(val)) {
-                    if (idx < inputs.length - 1) inputs[idx + 1].focus();
-                } else {
-                    e.target.value = '';
-                }
-
-                // Show clear button if at least one digit is present
-                const digitsEntered = [...inputs].filter(i => i.value !== '').length;
-                if (digitsEntered > 0) {
-                    clearBtnWrapper.classList.remove('hidden');
-                } else {
-                    clearBtnWrapper.classList.add('hidden');
-                }
-
-                // If full 6 digits, fetch data & blur inputs
-                const code = [...inputs].map(i => i.value).join('');
-                if (code.length === 6) {
-                    fetchCodeData(code);
-                    document.activeElement.blur();
-                }
+            clearBtn.addEventListener('click', () => {
+                clearInputs();
             });
 
-            // Backspace moves to previous input if empty
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Backspace' && !input.value && idx > 0) {
-                    inputs[idx - 1].focus();
-                }
-            });
-
-            // Handle paste of full code
-            input.addEventListener('paste', (e) => {
-                e.preventDefault();
-                const paste = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-                if (paste.length) {
-                    paste.split('').forEach((char, i) => {
-                        if (inputs[i]) inputs[i].value = char;
-                    });
-                    if (paste.length > 0) {
-                        clearBtnWrapper.classList.remove('hidden');
+            // Focus next input automatically, allow only digits
+            inputs.forEach((input, idx) => {
+                input.addEventListener('input', (e) => {
+                    const val = e.target.value;
+                    if (/^\d$/.test(val)) {
+                        if (idx < inputs.length - 1) inputs[idx + 1].focus();
+                    } else {
+                        e.target.value = '';
                     }
-                    if (paste.length === 6) {
-                        fetchCodeData(paste);
+
+                    // Show clear button if at least one digit is present
+                    const digitsEntered = [...inputs].filter(i => i.value !== '').length;
+                    if (digitsEntered > 0) {
+                        clearBtnWrapper.classList.remove('hidden');
+                    } else {
+                        clearBtnWrapper.classList.add('hidden');
+                    }
+
+                    // If full 6 digits, fetch data & blur inputs
+                    const code = [...inputs].map(i => i.value).join('');
+                    if (code.length === 6) {
+                        fetchCodeData(code);
                         document.activeElement.blur();
                     }
-                }
+                });
+
+                // Backspace moves to previous input if empty
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !input.value && idx > 0) {
+                        inputs[idx - 1].focus();
+                    }
+                });
+
+                // Handle paste of full code
+                input.addEventListener('paste', (e) => {
+                    e.preventDefault();
+                    const paste = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+                    if (paste.length) {
+                        paste.split('').forEach((char, i) => {
+                            if (inputs[i]) inputs[i].value = char;
+                        });
+                        if (paste.length > 0) {
+                            clearBtnWrapper.classList.remove('hidden');
+                        }
+                        if (paste.length === 6) {
+                            fetchCodeData(paste);
+                            document.activeElement.blur();
+                        }
+                    }
+                });
             });
-        });
 
-        // Fetch data based on the code entered
-        async function fetchCodeData(code) {
-            resultDiv.innerHTML = '<p class="text-gray-500">Checking...</p>';
-            resultMobile.innerHTML = '<p class="text-gray-500"></p>';
-            const url = `https://script.google.com/macros/s/AKfycbxWaZqfnF7jMg56OKUcVRBtbfzLAl1BLkN1Bz8x0aABssrQUHWj7oxulTU3Y5lWMhex/exec?ID=${code}`;
-            try {
-                const res = await fetch(url);
-                const data = await res.json();
-                displayData(data);
-            } catch (err) {
-                resultDiv.innerHTML = '<p class="text-red-600">Error fetching data. Try again.</p>';
-                resultMobile.innerHTML = '<p class="text-red-600">Error fetching data. Try again.</p>';
-                console.error('Fetch error:', err);
+            // Fetch data based on the code entered
+            async function fetchCodeData(code) {
+                resultDiv.innerHTML = '<p class="text-gray-500">Checking...</p>';
+                if (resultMobile) {
+                    resultMobile.innerHTML = '<p class="text-gray-500"></p>';
+                }
+                actionButtons.classList.add('hidden');
+                const url = `https://script.google.com/macros/s/AKfycbxWaZqfnF7jMg56OKUcVRBtbfzLAl1BLkN1Bz8x0aABssrQUHWj7oxulTU3Y5lWMhex/exec?ID=${code}`;
+                try {
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    displayData(data, code);
+                } catch (err) {
+                    resultDiv.innerHTML = '<p class="text-red-600">Error fetching data. Try again.</p>';
+                    if (resultMobile) {
+                        resultMobile.innerHTML = '<p class="text-red-600">Error fetching data. Try again.</p>';
+                    }
+                    console.error('Fetch error:', err);
+                }
             }
-        }
 
-        // Display fetched data in the result area
-            function displayData(data) {
+            // Display fetched data in the result area
+            function displayData(data, code) {
+                actionButtons.classList.add('hidden');
+
                 if (data.status === 'expired') {
                     resultDiv.innerHTML = '<p class="text-red-600 font-semibold">‼️ This code has expired.</p>';
-                    // Ensure only one message is shown in mobile
-                    if (!resultMobile.innerHTML) {
+                    if (resultMobile) {
                         resultMobile.innerHTML = '<p class="text-red-600 font-semibold">‼️ This code has expired.</p>';
                     }
                 } else if (data.ID) {
                     const content = `<pre class="bg-white p-4 rounded border border-gray-300 shadow-inner w-full">${data.Data}</pre>`;
                     resultDiv.innerHTML = content;
-                    // Only add content to resultMobile if it hasn't been added yet
-                    if (!resultMobile.innerHTML) {
+                    if (resultMobile) {
                         resultMobile.innerHTML = `<div class="result-text">${content}</div>`;
                     }
+
+                    actionButtons.classList.remove('hidden');
+
+                    // Re-assign event listeners to ensure they are active
+                    copyBtn.onclick = () => copyToClipboard(data.Data);
+                    downloadBtn.onclick = () => downloadAsTextFile(data.Data, code);
+
                 } else {
                     resultDiv.innerHTML = '<p class="text-red-600">❌ Invalid code or no data found.</p>';
-                    // Ensure only one error message is shown in mobile
-                    if (!resultMobile.innerHTML) {
+                    if (resultMobile) {
                         resultMobile.innerHTML = '<p class="text-red-600">❌ Invalid code or no data found.</p>';
                     }
                 }
             }
 
-
-        // Autofocus first input on load and check for query parameter
-        window.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const codeFromUrl = urlParams.get('code');
-
-            if (codeFromUrl && codeFromUrl.length === 6 && /^\d+$/.test(codeFromUrl)) {
-                codeFromUrl.split('').forEach((digit, i) => {
-                    inputs[i].value = digit;
+            // Copy text to clipboard
+            function copyToClipboard(text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('Text copied to clipboard!');
+                }).catch(err => {
+                    console.error('Error copying text: ', err);
                 });
+            }
 
-                // Fetch the data for this code
-                fetchCodeData(codeFromUrl);
-            } else {
-                inputs[0].focus(); // If no valid code, focus first input
+            // Download text as .txt file with the code in the file name
+            function downloadAsTextFile(text, code) {
+                const blob = new Blob([text], { type: 'text/plain' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `shared_text_${code}.txt`;
+                link.click();
+                URL.revokeObjectURL(link.href); // Clean up the object URL
+            }
+
+            // Autofocus first input on load and check for query parameter
+            window.addEventListener('DOMContentLoaded', () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const codeFromUrl = urlParams.get('code');
+
+                if (codeFromUrl && codeFromUrl.length === 6 && /^\d+$/.test(codeFromUrl)) {
+                    codeFromUrl.split('').forEach((digit, i) => {
+                        if (inputs[i]) inputs[i].value = digit;
+                    });
+
+                    fetchCodeData(codeFromUrl);
+                } else {
+                    if (inputs[0]) inputs[0].focus();
+                }
+            });
+        </script>
+
+    <script>
+        document.addEventListener('keydown', function (e) {
+            if (e.key === "F12" || (e.ctrlKey && e.shiftKey && e.key === "I")) {
+                e.preventDefault();
             }
         });
+
+        document.addEventListener('contextmenu', function (e) {
+            e.preventDefault(); // Prevent right-click menu
+        });
     </script>
+
 </body>
 
 </html>
