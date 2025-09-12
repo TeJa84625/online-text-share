@@ -254,7 +254,7 @@
             }
 
             // Submit to Google Form
-            const formUrl = '';//https://docs.google.com/forms/d/e/1FAIpQLSdHUZHIdCRqnpjFN3s0GPdNsU2YT_3xXvG-ERL2oYOnnEA_YA/formResponse
+            const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSdHUZHIdCRqnpjFN3s0GPdNsU2YT_3xXvG-ERL2oYOnnEA_YA/formResponse';//
             const formData = new FormData();
             formData.append('entry.69522754', code);
             formData.append('entry.659475936', 'Text');
@@ -297,7 +297,7 @@
             generateQrBtn.disabled = true;
             generateQrBtn.textContent = "Generating...";
 
-            const url = `code.html?code=${code}`;
+            const url = `https://teja84625.github.io/online-text-share/code.html?code=${code}`;
             const qrCode = new QRCode(qrCodeContainer, {
                 text: url,
                 width: 128,
@@ -336,3 +336,4 @@
 </body>
 
 </html>
+
