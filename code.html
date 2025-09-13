@@ -62,7 +62,6 @@
 </head>
 
 <body class="bg-gray-100 min-h-screen font-sans">
-    <!-- NAVBAR -->
     <nav class="bg-white shadow-md px-6 py-4 flex justify-between items-center sticky top-0 z-10 select-none">
         <div class="text-xl font-bold text-indigo-700">TextShare</div>
         <div class="space-x-6 text-gray-700 font-medium">
@@ -71,9 +70,7 @@
         </div>
     </nav>
 
-    <!-- Split Layout -->
     <main class="flex flex-col lg:flex-row min-h-[calc(100vh-80px)]">
-        <!-- Left: Code Input -->
         <section class="w-auto flex flex-col items-center justify-start p-6 bg-white shadow-inner fade-in space-y-6">
             <h1 class="text-3xl font-bold text-indigo-700">Enter Share Code</h1>
             <div id="codeInputs" class="flex justify-start gap-3 w-full max-w-sm justify-center">
@@ -91,7 +88,6 @@
                     class="code-box w-12 h-14 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 transition" />
             </div>
 
-            <!-- Clear button visible if at least 1 digit entered -->
             <div id="clearBtnWrapper" class="hidden w-full max-w-sm flex justify-center items-center">
                 <button id="clearBtn"
                     class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded transition shadow">
@@ -99,17 +95,13 @@
                 </button>
             </div>
 
-            <!-- Mobile result below inputs -->
             <div id="resultMobile" class="text-center text-gray-700 text-lg lg:hidden"></div>
         </section>
 
 
-        <!-- Right: Result Display -->
         <section class="lg:w-full w-full p-8 bg-gray-50 fade-in flex flex-col">
-            <!-- Header and Action Buttons in one line -->
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-semibold text-gray-800 border-b pb-2">Shared Text</h2>
-                <!-- Action buttons: Copy and Download placed on the right -->
                 <div id="actionButtons" class="action-buttons flex space-x-4 hidden">
                     <button id="copyBtn" aria-label="Copy Text"
                         class="bg-indigo-500 text-white px-4 py-2 rounded shadow hover:bg-indigo-600">
@@ -121,162 +113,244 @@
                     </button>
                 </div>
             </div>
-            <!-- Result Section Below with Full Width -->
             <div id="result" class="text-gray-700 text-lg whitespace-pre-wrap break-words w-full h-full">
                 <p class="text-gray-400">Enter a 6-digit code to view the shared content here.</p>
             </div>
         </section>
-        </main>
-        
-        <script>
-    const inputs = document.querySelectorAll('.code-box');
-    const resultDiv = document.getElementById('result');
-    const resultMobile = document.getElementById('resultMobile');
-    const clearBtn = document.getElementById('clearBtn');
-    const clearBtnWrapper = document.getElementById('clearBtnWrapper');
-    const actionButtons = document.getElementById('actionButtons');
-    const copyBtn = document.getElementById('copyBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
+    </main>
 
-    // Helper: Clear all inputs and result
-    function clearInputs() {
-        inputs.forEach(input => input.value = '');
-        if (inputs.length > 0) inputs[0].focus();
-        clearBtnWrapper.classList.add('hidden');
-    }
+    <div id="passwordModal"
+        class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm fade-in">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Enter Password</h3>
+            <div class="relative mb-4">
+                <input type="password" id="passwordInput"
+                    class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    placeholder="Enter password">
+                <span id="togglePassword"
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-gray-600">
+                    <i class="fa-solid fa-eye-slash"></i>
+                </span>
+            </div>
+            <p id="passwordError" class="text-red-600 text-sm mb-4 hidden">Wrong password. Please try again.</p>
+            <div class="flex justify-end space-x-2">
+                <button id="cancelPassword"
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg">Cancel</button>
+                <button id="submitPassword"
+                    class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg">Submit</button>
+            </div>
+        </div>
+    </div>
 
-    clearBtn.addEventListener('click', () => {
-        clearInputs();
-    });
 
-    // Handle full code paste from clipboard (more reliable on mobile)
-    inputs[0].addEventListener('input', (e) => {
-        const paste = e.target.value;
-        if (paste.length === 6) {
-            e.preventDefault(); // Prevent the single-character input
-            paste.split('').forEach((char, i) => {
-                if (inputs[i]) inputs[i].value = char;
+    <script>
+        const inputs = document.querySelectorAll('.code-box');
+        const resultDiv = document.getElementById('result');
+        const resultMobile = document.getElementById('resultMobile');
+        const clearBtn = document.getElementById('clearBtn');
+        const clearBtnWrapper = document.getElementById('clearBtnWrapper');
+        const actionButtons = document.getElementById('actionButtons');
+        const copyBtn = document.getElementById('copyBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // Modal elements
+        const passwordModal = document.getElementById('passwordModal');
+        const passwordInput = document.getElementById('passwordInput');
+        const passwordError = document.getElementById('passwordError');
+        const togglePassword = document.getElementById('togglePassword');
+        const cancelPasswordBtn = document.getElementById('cancelPassword');
+        const submitPasswordBtn = document.getElementById('submitPassword');
+
+        // Helper: Clear all inputs and result
+        function clearInputs() {
+            inputs.forEach(input => input.value = '');
+            if (inputs[0]) inputs[0].focus();
+            clearBtnWrapper.classList.add('hidden');
+        }
+
+        clearBtn.addEventListener('click', () => {
+            clearInputs();
+        });
+
+        // Focus next input automatically, allow only digits
+        inputs.forEach((input, idx) => {
+            input.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (/^\d$/.test(val)) {
+                    if (idx < inputs.length - 1) inputs[idx + 1].focus();
+                } else {
+                    e.target.value = '';
+                }
+
+                // Show clear button if at least one digit is present
+                const digitsEntered = [...inputs].filter(i => i.value !== '').length;
+                if (digitsEntered > 0) {
+                    clearBtnWrapper.classList.remove('hidden');
+                } else {
+                    clearBtnWrapper.classList.add('hidden');
+                }
+
+                // If full 6 digits, fetch data & blur inputs
+                const code = [...inputs].map(i => i.value).join('');
+                if (code.length === 6) {
+                    fetchCodeData(code);
+                    document.activeElement.blur();
+                }
             });
-            fetchCodeData(paste);
-            document.activeElement.blur();
-        }
-    });
 
-    // Focus next input automatically, allow only digits
-    inputs.forEach((input, idx) => {
-        input.addEventListener('input', (e) => {
-            const val = e.target.value;
-            if (/^\d$/.test(val)) {
-                if (idx < inputs.length - 1) inputs[idx + 1].focus();
-            } else {
-                e.target.value = '';
-            }
+            // Backspace moves to previous input if empty
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !input.value && idx > 0) {
+                    inputs[idx - 1].focus();
+                }
+            });
 
-            // Show clear button if at least one digit is present
-            const digitsEntered = [...inputs].filter(i => i.value !== '').length;
-            if (digitsEntered > 0) {
-                clearBtnWrapper.classList.remove('hidden');
-            } else {
-                clearBtnWrapper.classList.add('hidden');
-            }
-
-            // If full 6 digits, fetch data & blur inputs
-            const code = [...inputs].map(i => i.value).join('');
-            if (code.length === 6) {
-                fetchCodeData(code);
-                document.activeElement.blur();
-            }
+            // Handle paste of full code
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const paste = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+                if (paste.length) {
+                    paste.split('').forEach((char, i) => {
+                        if (inputs[i]) inputs[i].value = char;
+                    });
+                    if (paste.length > 0) {
+                        clearBtnWrapper.classList.remove('hidden');
+                    }
+                    if (paste.length === 6) {
+                        fetchCodeData(paste);
+                        document.activeElement.blur();
+                    }
+                }
+            });
         });
 
-        // Backspace moves to previous input if empty
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Backspace' && !input.value && idx > 0) {
-                inputs[idx - 1].focus();
+        // Fetch data based on the code entered
+        async function fetchCodeData(code) {
+            resultDiv.innerHTML = '<p class="text-gray-500">Checking...</p>';
+            actionButtons.classList.add('hidden');
+            const url = `https://script.google.com/macros/s/AKfycbxWaZqfnF7jMg56OKUcVRBtbfzLAl1BLkN1Bz8x0aABssrQUHWj7oxulTU3Y5lWMhex/exec?ID=${code}`;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                displayData(data, code);
+            } catch (err) {
+                resultDiv.innerHTML = '<p class="text-red-600">Error fetching data. Try again.</p>';
+                console.error('Fetch error:', err);
             }
-        });
-
-        // The previous paste handler is replaced by the more reliable one on the first input.
-    });
-
-    // Fetch data based on the code entered
-    async function fetchCodeData(code) {
-        resultDiv.innerHTML = '<p class="text-gray-500">Checking...</p>';
-        if (resultMobile) {
-            resultMobile.innerHTML = '<p class="text-gray-500"></p>';
         }
-        actionButtons.classList.add('hidden');
-        const url = `https://script.google.com/macros/s/AKfycbxWaZqfnF7jMg56OKUcVRBtbfzLAl1BLkN1Bz8x0aABssrQUHWj7oxulTU3Y5lWMhex/exec?ID=${code}`;
-        try {
-            const res = await fetch(url);
-            const data = await res.json();
-            displayData(data, code);
-        } catch (err) {
-            resultDiv.innerHTML = '<p class="text-red-600">Error fetching data. Try again.</p>';
-            if (resultMobile) {
-                resultMobile.innerHTML = '<p class="text-red-600">Error fetching data. Try again.</p>';
+
+        // Display fetched data in the result area
+        function displayData(data, code) {
+            actionButtons.classList.add('hidden');
+
+            if (data.status === 'expired') {
+                resultDiv.innerHTML = '<p class="text-red-600 font-semibold">‼️ This code has expired.</p>';
+            } else if (data.ID) {
+                if (data.Security && data.Security.trim() !== '-') {
+                    // If Security exists, show the password modal
+                    showPasswordModal(data, code);
+                } else {
+                    // Display content directly if no security
+                    renderContent(data.Data, code);
+                }
+            } else {
+                resultDiv.innerHTML = '<p class="text-red-600">❌ Invalid code or no data found.</p>';
             }
-            console.error('Fetch error:', err);
         }
-    }
 
-    // Display fetched data in the result area
-    function displayData(data, code) {
-        actionButtons.classList.add('hidden');
-
-        if (data.status === 'expired') {
-            resultDiv.innerHTML = '<p class="text-red-600 font-semibold">‼️ This code has expired.</p>';
-        } else if (data.ID) {
-            const content = `<pre class="bg-white p-4 rounded border border-gray-300 shadow-inner w-full">${data.Data}</pre>`;
-            resultDiv.innerHTML = content;
+        // Render the content and show action buttons
+        function renderContent(content, code) {
+            const preContent = `<pre class="bg-white p-4 rounded border border-gray-300 shadow-inner w-full">${content}</pre>`;
+            resultDiv.innerHTML = preContent;
 
             actionButtons.classList.remove('hidden');
 
             // Re-assign event listeners to ensure they are active
-            copyBtn.onclick = () => copyToClipboard(data.Data);
-            downloadBtn.onclick = () => downloadAsTextFile(data.Data, code);
-
-        } else {
-            resultDiv.innerHTML = '<p class="text-red-600">❌ Invalid code or no data found.</p>';
+            copyBtn.onclick = () => copyToClipboard(content);
+            downloadBtn.onclick = () => downloadAsTextFile(content, code);
         }
-    }
 
-    // Copy text to clipboard
-    function copyToClipboard(text) {
-        navigator.clipboard.writeText(text).then(() => {
-            alert('Text copied to clipboard!');
-        }).catch(err => {
-            console.error('Error copying text: ', err);
-        });
-    }
+        // Show the custom password modal
+        function showPasswordModal(data, code) {
+            passwordModal.classList.remove('hidden');
+            passwordInput.value = '';
+            passwordError.classList.add('hidden');
+            passwordInput.focus();
 
-    // Download text as .txt file with the code in the file name
-    function downloadAsTextFile(text, code) {
-        const blob = new Blob([text], { type: 'text/plain' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `shared_text_${code}.txt`;
-        link.click();
-        URL.revokeObjectURL(link.href);
-    }
+            const onSubmit = () => {
+                const enteredPassword = passwordInput.value;
+                if (enteredPassword === data.Security) {
+                    passwordModal.classList.add('hidden');
+                    renderContent(data.Data, code);
+                } else {
+                    passwordError.classList.remove('hidden');
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                }
+            };
 
-    // Autofocus first input on load and check for query parameter
-    window.addEventListener('DOMContentLoaded', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const codeFromUrl = urlParams.get('code');
+            // Event listener for the submit button
+            submitPasswordBtn.onclick = onSubmit;
 
-        if (codeFromUrl && codeFromUrl.length === 6 && /^\d+$/.test(codeFromUrl)) {
-            codeFromUrl.split('').forEach((digit, i) => {
-                if (inputs[i]) inputs[i].value = digit;
+            // Event listener for "Enter" key
+            passwordInput.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    onSubmit();
+                }
+            };
+
+            // Event listener for the cancel button
+            cancelPasswordBtn.onclick = () => {
+                passwordModal.classList.add('hidden');
+                resultDiv.innerHTML = '<p class="text-gray-400">Enter a 6-digit code to view the shared content here.</p>';
+            };
+
+            // Toggle password visibility
+            togglePassword.onclick = () => {
+                const type = passwordInput.type === 'password' ? 'text' : 'password';
+                passwordInput.type = type;
+                const icon = togglePassword.querySelector('i');
+                icon.classList.toggle('fa-eye');
+                icon.classList.toggle('fa-eye-slash');
+            };
+        }
+
+        // Copy text to clipboard
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Text copied to clipboard!');
+            }).catch(err => {
+                console.error('Error copying text: ', err);
             });
-
-            fetchCodeData(codeFromUrl);
-        } else {
-            if (inputs && inputs[0]) inputs[0].focus();
         }
-    });
-</script>
 
-    <script>
+        // Download text as .txt file with the code in the file name
+        function downloadAsTextFile(text, code) {
+            const blob = new Blob([text], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `shared_text_${code}.txt`;
+            link.click();
+            URL.revokeObjectURL(link.href); // Clean up the object URL
+        }
+
+        // Autofocus first input on load and check for query parameter
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const codeFromUrl = urlParams.get('code');
+
+            if (codeFromUrl && codeFromUrl.length === 6 && /^\d+$/.test(codeFromUrl)) {
+                codeFromUrl.split('').forEach((digit, i) => {
+                    if (inputs[i]) inputs[i].value = digit;
+                });
+
+                fetchCodeData(codeFromUrl);
+            } else {
+                if (inputs[0]) inputs[0].focus();
+            }
+        });
+
+        // Disable developer tools and right-click
         document.addEventListener('keydown', function (e) {
             if (e.key === "F12" || (e.ctrlKey && e.shiftKey && e.key === "I")) {
                 e.preventDefault();
@@ -291,5 +365,3 @@
 </body>
 
 </html>
-
-
