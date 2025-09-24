@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Online Share Text</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        textarea {
+            overflow: hidden;
+            min-height: 100px;
+        }
+
+        .popup-animate {
+            animation: popupFadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes popupFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .btn-disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen font-sans">
+
+    <div id="pagePopup" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md relative popup-animate">
+            <h3 class="text-xl font-semibold mb-2 text-indigo-700">Welcome to TextShare!</h3>
+            <p class="text-gray-700 mb-4">
+                Share your text easily using a unique code or QR. Don't forget to set an expiry or a password if needed!
+            </p>
+            <button id="closePopupBtn"
+                class="absolute top-2 right-2 text-gray-500 hover:text-indigo-600 text-xl font-bold">
+                ×
+            </button>
+            <button id="closePopup"
+                class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition w-full">
+                Got it!
+            </button>
+        </div>
+    </div>
+
+    <nav class="bg-white shadow-md px-6 py-4 flex justify-between items-center sticky top-0 z-10">
+        <a href="#">
+            <div class="text-xl font-bold text-indigo-700">TextShare</div>
+        </a>
+        <div class="space-x-6 text-gray-700 font-medium">
+            <a href="code.html" class="hover:text-indigo-600 transition">I have a code</a>
+            <a href="about.html" class="hover:text-indigo-600 transition">About</a>
+        </div>
+    </nav>
+
+    <main class="max-w-3xl mx-auto mt-10 bg-white p-8 rounded-xl shadow-md fade-in">
+        <h2 class="text-3xl font-bold mb-6 text-indigo-700 text-center">Online Share Text</h2>
+
+        <textarea id="textInput" placeholder="Type or paste your text here..."
+            class="w-full p-4 border border-gray-300 rounded-lg resize-y min-h-[200px] focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+            oninput="autoResize(this)"></textarea>
+
+        <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <label class="inline-flex items-center text-gray-700">
+                <input type="checkbox" id="expiryCheck" class="mr-2 accent-indigo-600">
+                Set Expiry
+            </label>
+
+            <div class="flex items-center space-x-4">
+                <label class="inline-flex items-center text-gray-700">
+                    <input type="checkbox" id="passwordCheck" class="mr-2 accent-indigo-600">
+                    Set Password
+                </label>
+            </div>
+
+            <div id="passwordFields" class="mt-0 hidden">
+                <div class="relative w-full">
+                    <input type="password" id="password"
+                        class="border p-2 rounded w-full focus:ring-2 focus:ring-indigo-400 focus:outline-none pr-10">
+
+                    <span id="togglePassword" class="absolute inset-y-0 right-2 flex items-center cursor-pointer">
+                        <i id="eyeIcon" class="fas fa-eye text-gray-500"></i>
+                    </span>
+                </div>
+            </div>
+
+            <button id="clearBtn"
+                class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded transition shadow">
+                Clear Text
+            </button>
+        </div>
+
+        <div id="expiryFields" class="mt-4 hidden fade-in">
+            <div class="grid sm:grid-cols-2 gap-4">
+                <input type="date" id="expiryDate"
+                    class="border p-2 rounded w-full focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                <input type="time" id="expiryTime"
+                    class="border p-2 rounded w-full focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+            </div>
+        </div>
+
+        <div id="generateContainer" class="mt-6 text-center">
+            <button id="generateBtn"
+                class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition font-semibold shadow-lg">
+                Generate Share Code
+            </button>
+        </div>
+
+        <div id="loadingBox" class="mt-6 text-center text-indigo-600 font-medium hidden fade-in">
+        </div>
+
+        <div id="resultBox"
+            class="mt-6 text-center text-lg font-semibold text-green-600 hidden fade-in flex items-center justify-center gap-3">
+        </div>
+
+        <div id="qrCodeSection" class="mt-6 hidden text-center flex justify-center items-center flex-col">
+            <button id="generateQrBtn"
+                class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition font-semibold shadow-lg">
+                Generate QR Code
+            </button>
+            <div id="qrCodeContainer" class="mt-4 flex justify-center items-center"></div>
+            <a id="downloadQrBtn"
+                class="hidden bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition font-semibold shadow-lg mt-4 inline-block"
+                download="qrcode.png">
+                Download QR Code
+            </a>
+        </div>
+
+        <section class="max-w-3xl mx-auto mt-10 mb-16 bg-gray-50 p-6 rounded-xl shadow-md text-gray-800">
+            <h3 class="text-2xl font-bold mb-4 text-indigo-700">About This Tool</h3>
+            <p class="mb-4">
+                This web app allows you to quickly share any text content online through a unique shareable code and QR
+                code.
+                It’s perfect for sharing notes, snippets, temporary messages, and other short-form content.
+            </p>
+
+            <h4 class="text-xl font-semibold mb-2 text-indigo-600">How to Use</h4>
+            <ul class="list-disc list-inside space-y-2 mb-4">
+                <li>Enter or paste your text into the input box.</li>
+                <li>Enable <strong>Set Expiry</strong> to define when the shared content will expire.</li>
+                <li>Click <strong>Generate Share Code</strong> to create a unique code and link.</li>
+                <li>Click <strong>Generate QR Code</strong> to get a scannable QR for easier sharing.</li>
+                <li>You can also <strong>download the QR code</strong> for offline sharing.</li>
+            </ul>
+
+            <p class="text-sm text-gray-600 italic">
+                Your data is processed client-side and not stored permanently unless specified with expiry.
+            </p>
+        </section>
+
+    </main>
+
+    <div id="messageModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm relative popup-animate text-center">
+            <h3 id="modalTitle" class="text-xl font-semibold mb-2 text-indigo-700"></h3>
+            <p id="modalMessage" class="text-gray-700 mb-4"></p>
+            <button id="closeMessageModalBtn"
+                class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition font-semibold shadow-lg w-full">
+                OK
+            </button>
+        </div>
+    </div>
+
+    <script src="/main.js"></script>
+</body>
+
+</html>
