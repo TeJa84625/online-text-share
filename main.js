@@ -54,8 +54,8 @@ const textInput = document.getElementById('textInput');
         togglePassword.addEventListener('click', () => {
             const isPassword = passwordInput.type === 'password';
             passwordInput.type = isPassword ? 'text' : 'password';
-            eyeIcon.classList.toggle('fa-eye-slash', isPassword);
-            eyeIcon.classList.toggle('fa-eye', !isPassword);
+            eyeIcon.classList.toggle('fa-eye', isPassword);
+            eyeIcon.classList.toggle('fa-eye-slash', !isPassword);
         });
 
         clearBtn.addEventListener('click', () => {
