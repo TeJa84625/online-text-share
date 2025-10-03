@@ -72,7 +72,7 @@ const textInput = document.getElementById('textInput');
         }
 
         async function checkId(id) {
-            const url = `https://script.google.com/macros/s/AKfycbxWaZqfnF7jMg56OKUcVRBtbfzLAl1BLkN1Bz8x0aABssrQUHWj7oxulTU3Y5lWMhex/exec?ID=${encodeURIComponent(id)}`;
+            const url = `https://script.google.com/macros/s/AKfycbyP-hulbsaImJGfl4qfMu8aaXKst8Gbw2GufxwozvYi_sMnadqSNVNbngcMAVzT_rCmng/exec?ID=${encodeURIComponent(id)}`;
             try {
                 const resp = await fetch(url);
                 if (!resp.ok) return false;
@@ -229,13 +229,14 @@ const textInput = document.getElementById('textInput');
                 return;
             }
 
-            const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSdHUZHIdCRqnpjFN3s0GPdNsU2YT_3xXvG-ERL2oYOnnEA_YA/formResponse';
+            const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSftBrI-g5U10HckiszD_osLQf9g8LQys2zgPwbLV0zrNybsbg/formResponse';
             const formData = new FormData();
-            formData.append('entry.69522754', code);
-            formData.append('entry.659475936', 'Text');
-            formData.append('entry.1160567664', text);
-            formData.append('entry.1316125311', securityVal);
-            formData.append('entry.2035113390', expiryVal);
+
+            formData.append('entry.1253786503', code);
+            formData.append('entry.881047682', 'Text');
+            formData.append('entry.684726616', text);
+            formData.append('entry.382468296', expiryVal);
+            formData.append('entry.532472212', securityVal);
 
             try {
                 await fetch(formUrl, {
