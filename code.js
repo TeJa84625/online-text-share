@@ -14,14 +14,15 @@ const togglePassword = document.getElementById('togglePassword');
 const cancelPasswordBtn = document.getElementById('cancelPassword');
 const submitPasswordBtn = document.getElementById('submitPassword');
 
+// --- Constants for API endpoints ---
 const BASE_URL = 'https://script.google.com/macros/s/AKfycbyP-hulbsaImJGfl4qfMu8aaXKst8Gbw2GufxwozvYi_sMnadqSNVNbngcMAVzT_rCmng/exec';
 
 function clearInputs() {
     inputs.forEach(input => input.value = '');
     if (inputs[0]) inputs[0].focus();
     clearBtnWrapper.classList.add('hidden');
-    resultDiv.innerHTML = '<p class="text-gray-400">Enter a 6-digit code to view the shared content here.</p>';
-    actionButtons.classList.add('hidden');
+    resultDiv.innerHTML = '<p class="text-gray-400">Enter a 6-digit code to view the shared content here.</p>'; // Reset result message
+    actionButtons.classList.add('hidden'); // Hide action buttons on clear
 }
 
 clearBtn.addEventListener('click', () => {
@@ -76,6 +77,23 @@ inputs.forEach((input, idx) => {
 });
 
 /**
+ * Manages the state and appearance of the password submission button.
+ * @param {boolean} isLoading Whether to show the loading state.
+ */
+function setSubmitButtonLoading(isLoading) {
+    if (isLoading) {
+        submitPasswordBtn.disabled = true;
+        // You would typically use a CSS class for a spinner, but for plain JS, we just change the text
+        submitPasswordBtn.innerHTML = 'Verifying...';
+        submitPasswordBtn.style.opacity = 0.7; // Optional visual cue
+    } else {
+        submitPasswordBtn.disabled = false;
+        submitPasswordBtn.innerHTML = 'Submit';
+        submitPasswordBtn.style.opacity = 1.0;
+    }
+}
+
+/**
  * Fetches the initial data for the given 6-digit code.
  * @param {string} code The 6-digit code.
  */
@@ -109,10 +127,12 @@ function displayData(data, code) {
     } else if (data.status === 'not_found') {
         resultDiv.innerHTML = '<p class="text-red-600">❌ Invalid code or no data found.</p>';
     } else if (data.status === 'found' && data.Security === 'yes') {
-        showPasswordModal(code);
+        showPasswordModal(code); // Security is 'yes', prompt for password
     } else if (data.Data) { 
+        // Handles the case for non-secure entries if data is returned immediately.
         renderContent(data.Data, code);
     } else {
+        // Fallback for unexpected or incomplete response
         resultDiv.innerHTML = '<p class="text-red-600">Unexpected response from server.</p>';
     }
 }
@@ -123,7 +143,11 @@ function displayData(data, code) {
  * @param {string} password The entered password.
  */
 async function fetchSecureData(code, password) {
-    resultDiv.innerHTML = '<p class="text-gray-500">Verifying password...</p>';
+    // 1. Show Loading State
+    setSubmitButtonLoading(true);
+    // Also, update the main result area to show status
+    resultDiv.innerHTML = '<p class="text-gray-500">Verifying password...</p>'; 
+
     const url = `${BASE_URL}?ID=${code}&password=${encodeURIComponent(password)}`;
     
     try {
@@ -135,10 +159,12 @@ async function fetchSecureData(code, password) {
             passwordError.classList.remove('hidden');
             passwordInput.value = '';
             passwordInput.focus();
-            resultDiv.innerHTML = '<p class="text-gray-400">Please enter the password to view the content.</p>';
+            resultDiv.innerHTML = '<p class="text-gray-400">Please enter the password to view the content.</p>'; // Reset message on password error
+        } else if (data.Data) {
             passwordModal.classList.add('hidden');
             renderContent(data.Data, code);
         } else {
+            // Unexpected response after password
             passwordModal.classList.add('hidden');
             resultDiv.innerHTML = '<p class="text-red-600">Error: Could not retrieve secure data.</p>';
             console.error('Secure fetch unexpected data:', data);
@@ -147,6 +173,9 @@ async function fetchSecureData(code, password) {
         passwordModal.classList.add('hidden');
         resultDiv.innerHTML = '<p class="text-red-600">Error fetching secure data. Try again.</p>';
         console.error('Secure fetch error:', err);
+    } finally {
+        // 2. Hide Loading State regardless of success or failure
+        setSubmitButtonLoading(false);
     }
 }
 
@@ -170,8 +199,13 @@ function showPasswordModal(code) {
     passwordError.classList.add('hidden');
     passwordInput.focus();
     
+    // Ensure the button is reset to default state when the modal opens
+    setSubmitButtonLoading(false);
+
+    // Provide a clear message in the result area while the modal is open
     resultDiv.innerHTML = '<p class="text-gray-400">Please enter the password to view the content.</p>';
 
+    // Clear previous event handlers to prevent multiple executions
     submitPasswordBtn.onclick = null;
     passwordInput.onkeydown = null;
     cancelPasswordBtn.onclick = null;
@@ -181,8 +215,8 @@ function showPasswordModal(code) {
         if (enteredPassword) {
             fetchSecureData(code, enteredPassword);
         } else {
-            passwordError.classList.remove('hidden');
-            passwordInput.focus();
+             passwordError.classList.remove('hidden');
+             passwordInput.focus();
         }
     };
 
@@ -196,7 +230,7 @@ function showPasswordModal(code) {
 
     cancelPasswordBtn.onclick = () => {
         passwordModal.classList.add('hidden');
-        clearInputs();
+        clearInputs(); // Clear inputs and reset result
     };
 
     togglePassword.onclick = () => {
@@ -240,12 +274,16 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// --- Security and UX enhancements ---
+
 document.addEventListener('keydown', function (e) {
+    // Prevent F12 and Ctrl+Shift+I (Developer Tools)
     if (e.key === "F12" || (e.ctrlKey && e.shiftKey && e.key === "I")) {
         e.preventDefault();
     }
 });
 
 document.addEventListener('contextmenu', function (e) {
+    // Prevent right-click menu
     e.preventDefault();
 });
